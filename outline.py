@@ -5,11 +5,11 @@
 import numpy as np
 
 # choose parameters
-STOCK_SYMBOL = <stock_symbol>
-START_DATE_TIME = <start_date_time>
-CAPITAL_AMOUNT = <capital_amount>
-MAX_EXPECTED_DEPRECIATION_RATE = <max_expected_depreciation_rate>
-RATIO_STEP_SIZE = <ratio_step_size>
+STOCK_SYMBOL = None #stock_symbol
+START_DATE_TIME = None #start_date_time
+CAPITAL_AMOUNT = 1 #capital_amount
+MAX_EXPECTED_DEPRECIATION_RATE = 0 #max_expected_depreciation_rate
+RATIO_STEP_SIZE = 0 #ratio_step_size
 
 # get the high and low prices
 historical_prices = read_hist_data(STOCK_SYMBOL, start=START_DATE_TIME) # (ToDo - create read_hist_data functions)
