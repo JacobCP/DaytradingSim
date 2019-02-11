@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 class Holdings:
 
@@ -44,7 +45,7 @@ class Holdings:
         self.positions[price_point_index] = [(current_price, shares_to_buy)] # price_point_index: [(price_bought, num_shares_bought)*]
         self.capital -= current_price * shares_to_buy
 
-    def sim_step(self, new_price):
+    def sim_step(self, new_price, new_date_time):
         # some notes
         # for rollover, it needs to reach higher
         # for buying at lower, it just needs to reach exact
