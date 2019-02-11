@@ -29,16 +29,14 @@ price_points = np.array(price_points)
 # set amount to buy of each (only whole shares)
 num_points = len(price_points)
 available_per_point = CAPITAL_AMOUNT / num_points
-shares_to_buy = [round(available_per_point / price_point, 0) for price_point in price_points)]
-# convert to np.array
-shares_to_buy = np.array(shares_to_buy)
+shares_to_buy = np.floor(available_per_point / price_points)
 
 # set up current state variables (we start with one position of current start point)
 current_capital_available = CAPITAL_AMOUNT
 price_point_index = num_points - 1
 positions = {}
-positions[current_price_point_index] = [(price_points[initial_index], shares_to_buy[initial_index])] # price_point_index: [(price_bought, num_shares_bought)*]
-current_capital_available -= price_points[initial_index] * shares_to_buy[initial_index] 
+positions[price_point_index] = [(price_points[price_point_index], shares_to_buy[price_point_index])] # price_point_index: [(price_bought, num_shares_bought)*]
+current_capital_available -= price_points[price_point_index] * shares_to_buy[price_point_index] 
 
 # set up historical variables
 capital_available = []
