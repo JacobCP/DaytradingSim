@@ -1,6 +1,6 @@
 import pandas as pd
 
-def read_hist_data(stock_symbol, start_date_time, end_date_time=None):
+def read_hist_data(stock_symbol, start_date_time, end_date_time):
     hist_data = pd.read_csv("stock_data/" + stock_symbol + ".txt")
     print("extracting relevant fields...")
     hist_data = hist_data[["Date", "Time", "Open"]]
@@ -14,9 +14,8 @@ def read_hist_data(stock_symbol, start_date_time, end_date_time=None):
     hist_data["date_time"] = hist_data["date_time"].astype('datetime64[ns]')
     print("filtering out earlier ones...")
     hist_data = hist_data[hist_data["date_time"] >= pd.Timestamp(start_date_time)]
-    if end_date_time is not None:
-        print("filtering out later ones...")
-        hist_data = hist_data[hist_data["date_time"] <= pd.Timestamp(end_date_time)]
+    print("filtering out later ones...")
+    hist_data = hist_data[hist_data["date_time"] <= pd.Timestamp(end_date_time)]
 
     return hist_data
 
