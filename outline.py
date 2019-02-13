@@ -25,3 +25,6 @@ for sim_index in range(1, len(historical_prices)-1):
 	new_date_time = historical_prices.iloc[sim_index, 1]
 	sim_holdings.sim_step(new_price, new_date_time)
 
+last_index = historical_prices[-1]
+sim_holdings.close_simulation(historical_prices.iloc[last_index ,0], historical_prices.iloc[last_index, 1])
+

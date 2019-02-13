@@ -101,3 +101,13 @@ class Holdings:
 
         # save historical data
         self.update_historical(new_date_time, profit_made, transactions_made)
+
+    def close_simulation(self, close_price, close_date_time):
+        profit_made = 0.0
+        transactions_made = 0.0
+        
+        for position_index in self.positions:
+            profit_made += self.sell_position(position_index, close_price)
+            transaction_made += 1
+
+        self.update_historical(close_date_time, profit_made, transactions_made)
