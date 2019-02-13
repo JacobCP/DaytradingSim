@@ -4,6 +4,7 @@ import pandas as pd
 class Holdings:
 
     def __init__(self, initial_capital, start_date_time, start_price, lowest_expected_price, growth_step_size):
+
         # store what we'll need later
         self.capital = initial_capital
         self.lowest_expected_price = lowest_expected_price
@@ -13,7 +14,6 @@ class Holdings:
         # keep track as simulation moves along
         self.positions = {}
         self.current_index = None
-        self.total_profit = 0
         self.num_positions = 0
         # historical attributes
         self.historical_index = 0
@@ -38,11 +38,36 @@ class Holdings:
         # store in Class object
         self.shares_to_buy = shares_to_buy
 
-        # initialize first position
-        self.buy_position(num_points - 1, price_points[-1])
+        # initialize first step
+        self.first_sim_step(start_date_time)
 
-        # initialize historical information
-        self.update_historical(start_date_time, 0.0, 0)
+    ############################################
+    # retrieving attribute info
+    ############################################
+
+
+    def get_historical(self):
+        return self.historical_data
+
+    def get_num_price_points(self):
+        return len(self.price_points)
+
+    def get_current_total_profit(self):
+        return np.sum(self.historical_data["step_profit"])
+
+    def get_current_total_transactions(self):
+        return np.sum(self.historical_data["step_transactions"])
+
+    def get_max_positions_held(self):
+        return np.max(self.historical_data["num_positions"])
+
+    def get_min_capital_available(self):
+        return np.min(self.historical_data["capital_available"])
+
+    #############################################
+    # buying, selling and rollover
+    #############################################
+
 
     def buy_position(self, price_point_index, current_price):
         shares_to_buy = self.shares_to_buy[price_point_index]
@@ -53,7 +78,6 @@ class Holdings:
     def sell_position(self, price_point_index, current_price):
         bought_price, shares_bought = self.positions.pop(price_point_index)
         profit = (current_price - bought_price) * shares_bought
-        self.total_profit += profit
         self.num_positions -= 1
 
         return profit
@@ -61,12 +85,25 @@ class Holdings:
     def rollover_position(self, from_price_point_index, to_price_point_index):
         self.positions[to_price_point_index] = self.positions.pop(from_price_point_index)
     
+    ###############################################
+    # historical information
+    ###############################################
+
     def update_historical(self, new_date_time, step_profit_made, step_transactions_made):
         self.historical_data.loc[self.historical_index] = [new_date_time, self.capital, self.num_positions, step_profit_made, step_transactions_made]
         self.historical_index += 1
 
-        #self.historical_data.loc[self.historical_index] = [new_date_time, self.capital, self.]
-    
+    ###############################################
+    # actual simulation steps
+    ###############################################
+
+    def first_sim_step(self, start_date_time):
+        # initialize first position
+        self.buy_position(len(self.price_points) - 1, self.price_points[-1])
+
+        # initialize historical information
+        self.update_historical(start_date_time, 0.0, 1)
+
     def sim_step(self, new_price, new_date_time):
         # some notes
         # for rollover, it needs to reach higher
@@ -74,7 +111,7 @@ class Holdings:
         new_position = self.price_points.searchsorted(new_price)
         
         profit_made = 0.0
-        transactions_made = 0.0
+        transactions_made = 0
 
         # do selling / buying / rollover
         if new_position in [self.current_index, self.current_index + 1]: # nothing happened, just move on
@@ -83,6 +120,7 @@ class Holdings:
         elif new_position < self.current_index:
             self.buy_position(new_position, new_price)
             self.current_index = new_position
+            transactions_made += 1
         
         elif new_position > self.current_index + 1: 
             # get all lower positions
@@ -102,12 +140,13 @@ class Holdings:
         # save historical data
         self.update_historical(new_date_time, profit_made, transactions_made)
 
-    def close_simulation(self, close_price, close_date_time):
+    def last_sim_step(self, close_price, close_date_time):
         profit_made = 0.0
-        transactions_made = 0.0
+        transactions_made = 0
         
         for position_index in self.positions:
             profit_made += self.sell_position(position_index, close_price)
             transaction_made += 1
 
         self.update_historical(close_date_time, profit_made, transactions_made)
+
