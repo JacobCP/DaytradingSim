@@ -20,11 +20,13 @@ class Holdings:
         self.historical_data = pd.DataFrame(columns=["date_time", "capital_available", "num_positions", "step_profit", "step_transactions"])
 
         # create list of price buy/sell points
+        print("starting to create price points, from {} until {}".format(round(lowest_expected_price,2), start_price))
         price_points = []
         new_point = round(lowest_expected_price,2) # lowest point
+        growth_step_ratio = 1 + growth_step_size
         while new_point < start_price:
             price_points.append(new_point) # other points
-            new_point = round(new_point * growth_step_size, 2)
+            new_point = round(new_point * growth_step_ratio, 2)
         price_points.append(round(start_price,2) + .01) # starting price_point (we're selling once we get to a new high)
         # convert to np.array
         price_points = np.array(price_points)
