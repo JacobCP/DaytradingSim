@@ -19,6 +19,17 @@ lowest_expected_price = start_price * (1 - MAX_EXPECTED_DEPRECIATION_RATE)
 # Create Holdings Instance (automatically initializes first position)
 sim_holdings = Holdings(CAPITAL_AMOUNT, START_DATE_TIME, start_price, lowest_expected_price, GROWTH_STEP_SIZE)
 
+# create series of sim information:
+sim_info = pd.Series()
+# starting parameters
+sim_info["stock"] = STOCK_SYMBOL
+sim_info["start"] = START_DATE_TIME
+sim_info["end"] = END_DATE_TIME
+sim_info["capital"] = CAPITAL_AMOUNT
+sim_info["depreciation_accounted_for"] = MAX_EXPECTED_DEPRECIATION_RATE
+sim_info["appreciation_step_size"] = GROWTH_STEP_SIZE
+sim_info["num_price_points"] = sim_holdings.get_num_price_points()
+
 # run the simulation
 for sim_index in range(1, len(historical_prices)-1):
 	new_price = historical_prices.iloc[sim_index, 0]
@@ -32,17 +43,7 @@ sim_holdings.last_sim_step(historical_prices.iloc[last_index ,0], historical_pri
 # get results
 #################
 
-# create series of sim information:
-sim_info = pd.Series()
-# starting parameters
-sim_info["stock"] = STOCK_SYMBOL
-sim_info["start"] = START_DATE_TIME
-sim_info["end"] = END_DATE_TIME
-sim_info["capital"] = CAPITAL_AMOUNT
-sim_info["depreciation_accounted_for"] = MAX_EXPECTED_DEPRECIATION_RATE
-sim_info["appreciation_step_size"] = GROWTH_STEP_SIZE
-sim_info["num_price_points"] = sim_holdings.get_num_price_points()
-# results
+# add results to sim_info
 sim_info["profit_made"] = sim_holdings.get_current_total_profit()
 sim_info["total_transactions"] = sim_holdings.get_current_total_transactions()
 sim_info["max_positions"] = sim_holdings.get_max_positions_held()
