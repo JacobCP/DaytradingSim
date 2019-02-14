@@ -5,6 +5,7 @@ def read_hist_data(stock_symbol, start_date_time, end_date_time):
     file_path = os.path.join("stock_data", stock_symbol + "_" + start_date_time + "_" + end_date_time)
     if os.path.isfile(file_path):
         hist_data = pd.read_csv(file_path)
+        print("successfully loaded " + file_path + "...")
     else:
         hist_data = pd.read_csv("stock_data/" + stock_symbol + ".txt")
         print("extracting relevant fields...")
@@ -24,8 +25,6 @@ def read_hist_data(stock_symbol, start_date_time, end_date_time):
 
         # save for future so don't need to do each time
         hist_data.to_csv(file_path)
+        print("successfully created and saved " + file_path + "...")
 
     return hist_data
-
-if __name__ == "__main__":
-    read_hist_data("QQQ", None)
