@@ -2,7 +2,10 @@ import pandas as pd
 import os
 
 def read_hist_data(stock_symbol, start_date_time, end_date_time):
-    file_path = os.path.join("stock_data", stock_symbol + "_" + start_date_time + "_" + end_date_time)
+    file_name = stock_symbol + "_" \
+                + pd.Timestamp(start_date_time).strftime("%Y-%m-%d-%H%M") + "_" \
+                + pd.Timestamp(end_date_time).strftime("%Y-%m-%d-%H%M") + ".csv"
+    file_path = os.path.join("stock_data", file_name)
     if os.path.isfile(file_path):
         hist_data = pd.read_csv(file_path)
         print("successfully loaded " + file_path + "...")
