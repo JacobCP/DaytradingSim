@@ -84,7 +84,7 @@ class Holdings:
         profit = (current_price - bought_price) * shares_bought
         self.num_positions -= 1
         self.capital += current_price * shares_bought
-        
+
         return profit
 
     def rollover_position(self, from_price_point_index, to_price_point_index):
@@ -132,13 +132,16 @@ class Holdings:
             # get all lower positions
             lower_positions = [key for key in self.positions if key <= self.current_index]
 
-            # rollover highest one
-            self.rollover_position(lower_positions[-1], new_position)
-
             # sell all lower ones
             for position in lower_positions[:-1]:
                 profit_made += self.sell_position(position, new_price)
                 transactions_made += 1
+
+            # either rollover or sell highest one
+            if new_position in self.positions:
+                profit_made += self.sell_position(lower_positions[-1], new_price)
+            else:
+                self.rollover_position(lower_positions[-1], new_position)
 
             # update current index
             self.current_index = new_position
