@@ -17,7 +17,7 @@ start_price = historical_prices["Open"][0]
 lowest_expected_price = start_price * (1 - MAX_EXPECTED_DEPRECIATION_RATE)
 
 # Create Holdings Instance (automatically initializes first position)
-sim_holdings = Holdings(CAPITAL_AMOUNT, START_DATE_TIME, start_price, lowest_expected_price, GROWTH_STEP_SIZE)
+sim_holdings = Holdings(CAPITAL_AMOUNT, START_DATE_TIME, start_price, lowest_expected_price, GROWTH_STEP_SIZE, num_rows=len(historical_prices))
 
 # create series of sim information:
 sim_info = pd.Series()

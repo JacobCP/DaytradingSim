@@ -3,7 +3,7 @@ import pandas as pd
 
 class Holdings:
 
-    def __init__(self, initial_capital, start_date_time, start_price, lowest_expected_price, growth_step_size):
+    def __init__(self, initial_capital, start_date_time, start_price, lowest_expected_price, growth_step_size, num_rows=0):
 
         # store what we'll need later
         self.capital = initial_capital
@@ -17,7 +17,7 @@ class Holdings:
         self.num_positions = 0
         # historical attributes
         self.historical_index = 0
-        self.historical_data = pd.DataFrame(columns=["date_time", "capital_available", "num_positions", "step_profit", "step_transactions"])
+        self.historical_data = pd.DataFrame(index=np.arange(num_rows), columns=["date_time", "capital_available", "num_positions", "step_profit", "step_transactions"])
 
         # create list of price buy/sell points
         print("starting to create price points, from {} until {}".format(round(lowest_expected_price,2), start_price))
