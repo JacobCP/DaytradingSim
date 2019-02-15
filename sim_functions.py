@@ -30,6 +30,7 @@ class Holdings:
         price_points.append(round(start_price,2) + .01) # starting price_point (we're selling once we get to a new high)
         # convert to np.array
         price_points = np.array(price_points)
+        print("price points created")
         # store in Class object
         self.price_points = price_points
 
@@ -37,6 +38,7 @@ class Holdings:
         num_points = len(price_points)
         available_per_point = self.capital / num_points
         shares_to_buy = np.floor(available_per_point / price_points)
+
         # store in Class object
         self.shares_to_buy = shares_to_buy
 
@@ -101,8 +103,9 @@ class Holdings:
 
     def first_sim_step(self, start_date_time):
         # initialize first position
-        self.buy_position(len(self.price_points) - 1, self.price_points[-1])
-
+        initial_index = len(self.price_points) - 1
+        self.buy_position(initial_index, self.price_points[-1])
+        self.current_index = initial_index
         # initialize historical information
         self.update_historical(start_date_time, 0.0, 1)
 
