@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import numpy as np
 
 def read_hist_data(stock_symbol, start_date_time, end_date_time):
     file_name = stock_symbol + "_" \
@@ -26,8 +27,11 @@ def read_hist_data(stock_symbol, start_date_time, end_date_time):
         print("filtering out later ones...")
         hist_data = hist_data[hist_data["date_time"] <= pd.Timestamp(end_date_time)]
 
+        # reset index
+        hist_data.index = np.arange(len(hist_data))
+
         # save for future so don't need to do each time
-        hist_data.to_csv(file_path)
+        hist_data.to_csv(file_path, index=False)
         print("successfully created and saved " + file_path + "...")
 
     return hist_data
