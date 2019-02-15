@@ -83,7 +83,8 @@ class Holdings:
         bought_price, shares_bought = self.positions.pop(price_point_index)
         profit = (current_price - bought_price) * shares_bought
         self.num_positions -= 1
-
+        self.capital += current_price * shares_bought
+        
         return profit
 
     def rollover_position(self, from_price_point_index, to_price_point_index):
