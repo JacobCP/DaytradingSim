@@ -111,26 +111,36 @@ class Holdings:
         self.update_historical(start_date_time, 0.0, 1)
 
     def sim_step(self, new_price, new_date_time):
+        # debugging
+        #debugging_index = self.historical_index + 1
+        
         # some notes
         # for rollover, it needs to reach higher
         # for buying at lower, it just needs to reach exact
-        new_position = self.price_points.searchsorted(new_price)
-        
+        step_position = self.price_points.searchsorted(new_price)
+
         profit_made = 0.0
         transactions_made = 0
 
         # do selling / buying / rollover
-        if new_position in [self.current_index, self.current_index + 1]: # nothing happened, just move on
+        if step_position in [self.current_index, self.current_index + 1]: # nothing happened, just move on
             pass
         
-        elif new_position < self.current_index:
+        elif step_position < self.current_index:
+            new_position = step_position
+            #print("{}: Bought position {} at {}".format(debugging_index, new_position, new_price))
             self.buy_position(new_position, new_price)
             self.current_index = new_position
             transactions_made += 1
-        
-        elif new_position > self.current_index + 1: 
+
+            #print("updated keys: " + str(list(self.positions.keys())))
+
+        elif step_position > self.current_index + 1: 
+            new_position = step_position - 1
+
             # get all lower positions
-            lower_positions = [key for key in self.positions if key <= self.current_index]
+            lower_positions = [key for key in self.positions if key <= new_position]
+            #print("current_index: {}, lower_positions: {}".format(self.current_index, str(list(lower_positions))))
 
             # sell all lower ones
             for position in lower_positions[:-1]:
@@ -138,16 +148,26 @@ class Holdings:
                 transactions_made += 1
 
             # either rollover or sell highest one
+            #print("{}: Sold {} positions below position {} at {}".format(debugging_index, len(lower_positions) - 1, new_position, new_price))
             if new_position in self.positions:
+                #print("{}: Also sold position {} at {}".format(debugging_index, lower_positions[-1], new_price))
                 profit_made += self.sell_position(lower_positions[-1], new_price)
             else:
+                #print("{}: Also rolled over position {} to position {} at {}".format(debugging_index, lower_positions[-1], new_position, new_price))
                 self.rollover_position(lower_positions[-1], new_position)
 
             # update current index
             self.current_index = new_position
 
+            #print("updated keys: " + str(list(self.positions.keys())))
+
         # save historical data
         self.update_historical(new_date_time, profit_made, transactions_made)
+
+        # debugging
+        assert self.num_positions == len(self.positions.keys()), \
+            "Problem at index {}: num_positions is {} and actual keys are {}".format(self.historical_index, self.num_positions, len(self.positions.keys()))
+
 
     def last_sim_step(self, close_price, close_date_time):
         profit_made = 0.0
