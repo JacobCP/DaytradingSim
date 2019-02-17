@@ -74,6 +74,9 @@ class Holdings:
 
 
     def buy_position(self, price_point_index, current_price):
+		# make sure we're not buying a position that exists already		
+        assert price_point_index not in self.positions        
+
         shares_to_buy = self.shares_to_buy[price_point_index]
         self.positions[price_point_index] = (current_price, shares_to_buy) # price_point_index: [(price_bought, num_shares_bought)*]
         self.capital -= current_price * shares_to_buy
@@ -92,6 +95,9 @@ class Holdings:
         return profit
 
     def rollover_position(self, from_price_point_index, to_price_point_index):
+		# make sure we're not buying a position that exists already		
+        assert to_price_point_index not in self.positions        
+
         self.positions[to_price_point_index] = self.positions.pop(from_price_point_index)
         # debugging
         print("Rolled over {} to {}".format(from_price_point_index, to_price_point_index))
