@@ -17,32 +17,5 @@ historical_prices = read_hist_data(STOCK_SYMBOL, START_DATE_TIME, END_DATE_TIME)
 # Create Holdings Instance (automatically initializes first position)
 sim_holdings = Holdings(historical_prices, CAPITAL_AMOUNT, GROWTH_STEP_SIZE, MAX_EXPECTED_DEPRECIATION_RATE)
 
-# create series of sim information:
-sim_info = pd.Series()
-# starting parameters
-sim_info["stock"] = STOCK_SYMBOL
-sim_info["start"] = START_DATE_TIME
-sim_info["end"] = END_DATE_TIME
-sim_info["capital"] = CAPITAL_AMOUNT
-sim_info["depreciation_accounted_for"] = MAX_EXPECTED_DEPRECIATION_RATE
-sim_info["appreciation_step_size"] = GROWTH_STEP_SIZE
-sim_info["num_price_points"] = sim_holdings.get_num_price_points()
-
 # run the simulation
-for sim_index in range(1, len(historical_prices)-1):
-	sim_holdings.sim_step()
-
-last_index = historical_prices[-1]
-sim_holdings.last_sim_step(historical_prices.iloc[last_index ,0], historical_prices.iloc[last_index, 1])
-
-#################
-# get results
-#################
-
-# add results to sim_info
-sim_info["profit_made"] = sim_holdings.get_current_total_profit()
-sim_info["total_transactions"] = sim_holdings.get_current_total_transactions()
-sim_info["max_positions"] = sim_holdings.get_max_positions_held()
-sim_info["min_capital_available"] = sim_holdings.get_min_capital_available()	
-
-full_results = sim_holdings.get_historical()
+sim_holdings.run_sim()

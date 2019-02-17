@@ -122,6 +122,11 @@ class Holdings:
     # actual simulation steps
     ###############################################
 
+    def run_sim(self):
+        sim_not_finished = self.sim_step()
+        while sim_not_finished:
+            sim_not_finished = self.sim_step()
+
     def first_sim_step(self):
         # initialize first position
         initial_index = len(self.price_points) - 1
@@ -139,6 +144,10 @@ class Holdings:
         
         new_price = self.historical_prices.iloc[self.historical_index, 0]
         new_date_time = self.historical_prices.iloc[self.historical_index, 1]
+
+        if self.historical_index == self.last_historical_index:
+            self.last_sim_step(new_price, new_date_time)
+            return(False)		
 
         # some notes
         # for rollover, it needs to reach higher
@@ -200,6 +209,8 @@ class Holdings:
 
 		# move historical_index
         self.historical_index += 1
+
+        return(True)
 
     def last_sim_step(self, close_price, close_date_time):
         profit_made = 0.0
