@@ -78,17 +78,23 @@ class Holdings:
         self.positions[price_point_index] = (current_price, shares_to_buy) # price_point_index: [(price_bought, num_shares_bought)*]
         self.capital -= current_price * shares_to_buy
         self.num_positions += 1
+        # debugging
+        print("Bought {}".format(price_point_index))
 
     def sell_position(self, price_point_index, current_price):
         bought_price, shares_bought = self.positions.pop(price_point_index)
         profit = (current_price - bought_price) * shares_bought
         self.num_positions -= 1
         self.capital += current_price * shares_bought
+        # debugging
+        print("Sold {}".format(price_point_index))
 
         return profit
 
     def rollover_position(self, from_price_point_index, to_price_point_index):
         self.positions[to_price_point_index] = self.positions.pop(from_price_point_index)
+        # debugging
+        print("Rolled over {} to {}".format(from_price_point_index, to_price_point_index))
     
     ###############################################
     # historical information
@@ -112,7 +118,7 @@ class Holdings:
 
     def sim_step(self, new_price, new_date_time):
         # debugging
-        #debugging_index = self.historical_index + 1
+        debugging_index = self.historical_index + 1
         
         # some notes
         # for rollover, it needs to reach higher
@@ -128,7 +134,11 @@ class Holdings:
         
         elif step_position < self.current_index:
             new_position = step_position
-            #print("{}: Bought position {} at {}".format(debugging_index, new_position, new_price))
+
+			# debugging			
+            print("{}: {} -> {}".format(debugging_index, self.current_index, new_position))
+            print("positions: {}".format(sorted(self.positions)))
+
             self.buy_position(new_position, new_price)
             self.current_index = new_position
             transactions_made += 1
@@ -138,9 +148,13 @@ class Holdings:
         elif step_position > self.current_index + 1: 
             new_position = step_position - 1
 
+			# debugging			
+            print("{}: {} -> {}".format(debugging_index, self.current_index, new_position))
+            print("positions: {}".format(sorted(self.positions)))
+
             # get all lower positions
-            lower_positions = [key for key in self.positions if key <= new_position]
-            #print("current_index: {}, lower_positions: {}".format(self.current_index, str(list(lower_positions))))
+            lower_positions = sorted([key for key in self.positions if key < new_position])
+            print("lower_positions: {}".format(lower_positions))
 
             # sell all lower ones
             for position in lower_positions[:-1]:
@@ -148,18 +162,14 @@ class Holdings:
                 transactions_made += 1
 
             # either rollover or sell highest one
-            #print("{}: Sold {} positions below position {} at {}".format(debugging_index, len(lower_positions) - 1, new_position, new_price))
             if new_position in self.positions:
-                #print("{}: Also sold position {} at {}".format(debugging_index, lower_positions[-1], new_price))
                 profit_made += self.sell_position(lower_positions[-1], new_price)
             else:
-                #print("{}: Also rolled over position {} to position {} at {}".format(debugging_index, lower_positions[-1], new_position, new_price))
                 self.rollover_position(lower_positions[-1], new_position)
 
             # update current index
             self.current_index = new_position
 
-            #print("updated keys: " + str(list(self.positions.keys())))
 
         # save historical data
         self.update_historical(new_date_time, profit_made, transactions_made)
