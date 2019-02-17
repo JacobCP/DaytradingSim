@@ -35,3 +35,12 @@ def read_hist_data(stock_symbol, start_date_time, end_date_time):
         print("successfully created and saved " + file_path + "...")
 
     return hist_data
+
+def save_results(results_files, stock_symbol, results_file_names):
+    assert len(results_files) == len(results_file_names), "file_name and dataset lengths do not match."
+    dir_name = stock_symbol + "_results"
+    if not os.path.isdir(dir_name):
+        os.makedirs(dir_name)
+    for idx, file_name in enumerate(results_file_names):
+        print("Saving {} for {}".format(file_name, stock_symbol))
+        results_files[idx].to_csv(os.path.join(dir_name, file_name + '.csv'), float_format='%.3f')

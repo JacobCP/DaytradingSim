@@ -1,6 +1,6 @@
 import numpy as np
 from sim_functions import Holdings
-from data_in_out import read_hist_data
+from data_in_out import read_hist_data, save_results
 import pandas as pd
 
 # choose parameters
@@ -9,7 +9,7 @@ START_DATE_TIME = "2007-10-31 2:58 pm"
 END_DATE_TIME = "2010-12-7 9:30 am"
 CAPITAL_AMOUNT = 1000000
 MAX_EXPECTED_DEPRECIATION_RATE = .60
-GROWTH_STEP_SIZES = [.005]
+GROWTH_STEP_SIZES = [.02, .04]
 
 # get the high and low prices
 historical_prices = read_hist_data(STOCK_SYMBOL, START_DATE_TIME, END_DATE_TIME) # (ToDo - create read_hist_data functions)
@@ -26,9 +26,17 @@ for growth_size_step in GROWTH_STEP_SIZES:
 	sim_holdings.run_sim()
 
 	# get sim_info / results
+	sim_start_info = sim_holdings.get_sim_info()
 	sim_results_info = sim_holdings.get_results_info()
 	full_historical = sim_holdings.get_historical()
 
 	compare_results.loc[growth_size_step] = sim_results_info
+
+	# save full history for each growth_step_size
+	save_results([full_historical], STOCK_SYMBOL, ["full_historical_" + str(growth_size_step)])
+
+# save datasets with other info, and comparing results for different growth_step_sizes 
+save_results([sim_start_info, compare_results], STOCK_SYMBOL, ["sim_parameters", "compare_results"])
+	
 
 
