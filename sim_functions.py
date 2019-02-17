@@ -19,7 +19,6 @@ class Holdings:
         self.lowest_expected_price = start_price * (1 - max_expected_depreciation_rate)
         # other attributes
         self.price_points = None
-        self.shares_to_buy = None
         # keep track as simulation moves along
         self.positions = {}
         self.current_index = None
@@ -44,14 +43,6 @@ class Holdings:
         print("price points created")
         # store in Class object
         self.price_points = price_points
-
-        # set amount to buy of each (only whole shares)
-        num_points = len(price_points)
-        available_per_point = self.capital / num_points
-        shares_to_buy = np.floor(available_per_point / price_points)
-
-        # store in Class object
-        self.shares_to_buy = shares_to_buy
 
         # initialize first step
         self.first_sim_step()
@@ -103,6 +94,9 @@ class Holdings:
 
         return results_info
 
+    def get_full_info(self):
+        return self.get_sim_info().append(self.get_results_info())
+
     #############################################
     # buying, selling and rollover
     #############################################
@@ -112,7 +106,9 @@ class Holdings:
 		# make sure we're not buying a position that exists already		
         assert price_point_index not in self.positions        
 
-        shares_to_buy = self.shares_to_buy[price_point_index]
+        available_per_point = self.capital / (price_point_index + 1)
+        shares_to_buy = np.floor(available_per_point / current_price) 
+
         self.positions[price_point_index] = (current_price, shares_to_buy) # price_point_index: [(price_bought, num_shares_bought)*]
         self.capital -= current_price * shares_to_buy
         self.num_positions += 1
