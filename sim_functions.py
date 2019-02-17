@@ -3,11 +3,20 @@ import pandas as pd
 
 class Holdings:
 
-    def __init__(self, initial_capital, start_date_time, start_price, lowest_expected_price, growth_step_size, num_rows=0):
+    def __init__(self, historical_prices, initial_capital, growth_step_size, max_expected_depreciation_rate):
 
-        # store what we'll need later
+        # store arguments
+        self.historical_prices = historical_prices
+        self.initial_capital = initial_capital
+        self.growth_step_size = growth_step_size		
+        self.max_expected_depreciation_rate = max_expected_depreciation_rate
+		# calculate / store additional arguments
+        self.last_historical_index = len(historical_prices) - 1
+        self.start_date_time = historical_prices["date_time"].iloc[0]
+        self.end_date_time = historical_prices["date_time"].iloc[-1]		
         self.capital = initial_capital
-        self.lowest_expected_price = lowest_expected_price
+        start_price = historical_prices["Open"][0]
+        self.lowest_expected_price = start_price * (1 - max_expected_depreciation_rate)
         # other attributes
         self.price_points = None
         self.shares_to_buy = None
@@ -17,12 +26,12 @@ class Holdings:
         self.num_positions = 0
         # historical attributes
         self.historical_index = 0
-        self.historical_data = pd.DataFrame(index=np.arange(num_rows), columns=["date_time", "capital_available", "num_positions", "step_profit", "step_transactions"])
+        self.historical_data = pd.DataFrame(index=np.arange(len(historical_prices)), columns=["date_time", "capital_available", "num_positions", "step_profit", "step_transactions"])
 
         # create list of price buy/sell points
-        print("starting to create price points, from {} until {}".format(round(lowest_expected_price,2), start_price))
+        print("starting to create price points, from {} until {}".format(round(self.lowest_expected_price,2), start_price))
         price_points = []
-        new_point = round(lowest_expected_price,2) # lowest point
+        new_point = round(self.lowest_expected_price,2) # lowest point
         growth_step_ratio = 1 + growth_step_size
         while new_point < start_price:
             price_points.append(new_point) # other points
@@ -43,7 +52,7 @@ class Holdings:
         self.shares_to_buy = shares_to_buy
 
         # initialize first step
-        self.first_sim_step(start_date_time)
+        self.first_sim_step()
 
     ############################################
     # retrieving attribute info
@@ -108,24 +117,29 @@ class Holdings:
 
     def update_historical(self, new_date_time, step_profit_made, step_transactions_made):
         self.historical_data.loc[self.historical_index] = [new_date_time, self.capital, self.num_positions, step_profit_made, step_transactions_made]
-        self.historical_index += 1
 
     ###############################################
     # actual simulation steps
     ###############################################
 
-    def first_sim_step(self, start_date_time):
+    def first_sim_step(self):
         # initialize first position
         initial_index = len(self.price_points) - 1
         self.buy_position(initial_index, self.price_points[-1])
         self.current_index = initial_index
         # initialize historical information
+        start_date_time = self.historical_prices.iloc[self.historical_index, 1] 
         self.update_historical(start_date_time, 0.0, 1)
+		# move historical_index
+        self.historical_index += 1
 
-    def sim_step(self, new_price, new_date_time):
+    def sim_step(self):
         # debugging
-        debugging_index = self.historical_index + 1
+        debugging_index = self.historical_index
         
+        new_price = self.historical_prices.iloc[self.historical_index, 0]
+        new_date_time = self.historical_prices.iloc[self.historical_index, 1]
+
         # some notes
         # for rollover, it needs to reach higher
         # for buying at lower, it just needs to reach exact
@@ -184,6 +198,8 @@ class Holdings:
         assert self.num_positions == len(self.positions.keys()), \
             "Problem at index {}: num_positions is {} and actual keys are {}".format(self.historical_index, self.num_positions, len(self.positions.keys()))
 
+		# move historical_index
+        self.historical_index += 1
 
     def last_sim_step(self, close_price, close_date_time):
         profit_made = 0.0

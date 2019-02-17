@@ -13,11 +13,9 @@ GROWTH_STEP_SIZE = .005
 
 # get the high and low prices
 historical_prices = read_hist_data(STOCK_SYMBOL, START_DATE_TIME, END_DATE_TIME) # (ToDo - create read_hist_data functions)
-start_price = historical_prices["Open"][0]
-lowest_expected_price = start_price * (1 - MAX_EXPECTED_DEPRECIATION_RATE)
 
 # Create Holdings Instance (automatically initializes first position)
-sim_holdings = Holdings(CAPITAL_AMOUNT, START_DATE_TIME, start_price, lowest_expected_price, GROWTH_STEP_SIZE, num_rows=len(historical_prices))
+sim_holdings = Holdings(historical_prices, CAPITAL_AMOUNT, GROWTH_STEP_SIZE, MAX_EXPECTED_DEPRECIATION_RATE)
 
 # create series of sim information:
 sim_info = pd.Series()
@@ -32,9 +30,7 @@ sim_info["num_price_points"] = sim_holdings.get_num_price_points()
 
 # run the simulation
 for sim_index in range(1, len(historical_prices)-1):
-	new_price = historical_prices.iloc[sim_index, 0]
-	new_date_time = historical_prices.iloc[sim_index, 1]
-	sim_holdings.sim_step(new_price, new_date_time)
+	sim_holdings.sim_step()
 
 last_index = historical_prices[-1]
 sim_holdings.last_sim_step(historical_prices.iloc[last_index ,0], historical_prices.iloc[last_index, 1])
