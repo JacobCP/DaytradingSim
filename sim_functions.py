@@ -6,7 +6,7 @@ class Holdings:
     def __init__(self, historical_prices, initial_capital, growth_step_size, max_expected_depreciation_rate):
 
         # store arguments
-        self.historical_prices = historical_prices
+        self.historical_data = historical_prices
         self.initial_capital = initial_capital
         self.growth_step_size = growth_step_size		
         self.max_expected_depreciation_rate = max_expected_depreciation_rate
@@ -26,7 +26,9 @@ class Holdings:
         self.num_positions = 0
         # historical attributes
         self.historical_index = 0
-        self.historical_data = pd.DataFrame(index=np.arange(len(historical_prices)), columns=["date_time", "capital_available", "num_positions", "step_profit", "step_transactions"])
+        for column_name in ["capital_available", "num_positions", "step_profit", "step_transactions"]:
+            self.historical_data[column_name] = np.nan
+        #self.historical_data = pd.DataFrame(index=np.arange(len(historical_data)), columns=["date_time", "capital_available", "num_positions", "step_profit", "step_transactions"])
 
         # create list of price buy/sell points
         print("starting to create price points, from {} until {}".format(round(self.lowest_expected_price,2), start_price))
@@ -139,8 +141,8 @@ class Holdings:
     # historical information
     ###############################################
 
-    def update_historical(self, new_date_time, step_profit_made, step_transactions_made):
-        self.historical_data.loc[self.historical_index] = [new_date_time, self.capital, self.num_positions, step_profit_made, step_transactions_made]
+    def update_historical(self, step_profit_made, step_transactions_made):
+        self.historical_data.loc[self.historical_index, "capital_available":"step_transactions"] = [self.capital, self.num_positions, step_profit_made, step_transactions_made]
 
     ###############################################
     # actual simulation steps
@@ -157,8 +159,7 @@ class Holdings:
         self.buy_position(initial_index, self.price_points[-1])
         self.current_index = initial_index
         # initialize historical information
-        start_date_time = self.historical_prices.iloc[self.historical_index, 1] 
-        self.update_historical(start_date_time, 0.0, 1)
+        self.update_historical(0.0, 1)
 		# move historical_index
         self.historical_index += 1
 
@@ -166,11 +167,10 @@ class Holdings:
         # debugging
         debugging_index = self.historical_index
         
-        new_price = self.historical_prices.iloc[self.historical_index, 0]
-        new_date_time = self.historical_prices.iloc[self.historical_index, 1]
+        new_price = self.historical_data.iloc[self.historical_index, 0]
 
         if self.historical_index == self.last_historical_index:
-            self.last_sim_step(new_price, new_date_time)
+            self.last_sim_step(new_price)
             return(False)		
 
         # some notes
@@ -225,7 +225,7 @@ class Holdings:
 
 
         # save historical data
-        self.update_historical(new_date_time, profit_made, transactions_made)
+        self.update_historical(profit_made, transactions_made)
 
         # debugging
         assert self.num_positions == len(self.positions.keys()), \
@@ -236,7 +236,7 @@ class Holdings:
 
         return(True)
 
-    def last_sim_step(self, close_price, close_date_time):
+    def last_sim_step(self, close_price):
         profit_made = 0.0
         transactions_made = 0
         
@@ -244,5 +244,5 @@ class Holdings:
             profit_made += self.sell_position(position_index, close_price)
             transaction_made += 1
 
-        self.update_historical(close_date_time, profit_made, transactions_made)
+        self.update_historical(profit_made, transactions_made)
 
