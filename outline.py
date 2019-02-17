@@ -19,3 +19,8 @@ sim_holdings = Holdings(historical_prices, CAPITAL_AMOUNT, GROWTH_STEP_SIZE, MAX
 
 # run the simulation
 sim_holdings.run_sim()
+
+# get sim_info / results
+sim_starting_info = sim_holdings.get_sim_info()
+sim_results_info = sim_holdings.get_results_info()
+full_results = sim_holdings.get_historical()

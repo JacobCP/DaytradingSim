@@ -77,6 +77,30 @@ class Holdings:
     def get_min_capital_available(self):
         return np.min(self.historical_data["capital_available"])
 
+    def get_sim_info(self):
+		# create series of sim information:
+        sim_info = pd.Series()
+		# starting parameters
+        sim_info["start"] = self.start_date_time
+        sim_info["end"] = self.end_date_time
+        sim_info["capital"] = self.initial_capital
+        sim_info["depreciation_accounted_for"] = self.max_expected_depreciation_rate
+        sim_info["appreciation_step_size"] = self.growth_step_size
+        sim_info["num_price_points"] = self.get_num_price_points()
+
+        return sim_info
+    
+    def get_results_info(self):
+		# create series of sim information:
+        results_info = pd.Series()
+
+        results_info["profit_made"] = self.get_current_total_profit()
+        results_info["total_transactions"] = self.get_current_total_transactions()
+        results_info["max_positions"] = self.get_max_positions_held()
+        results_info["min_capital_available"] = self.get_min_capital_available()	
+
+        return results_info
+
     #############################################
     # buying, selling and rollover
     #############################################
