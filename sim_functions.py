@@ -4,6 +4,9 @@ import pandas as pd
 class Holdings:
 
     def __init__(self, historical_prices, initial_capital, growth_step_size, max_expected_depreciation_rate):
+        # get col_names
+        date_time_col = historical_prices.columns[0]
+        price_col = historical_prices.columns[1]
 
         # store arguments
         self.historical_data = historical_prices
@@ -12,10 +15,10 @@ class Holdings:
         self.max_expected_depreciation_rate = max_expected_depreciation_rate
 		# calculate / store additional arguments
         self.last_historical_index = len(historical_prices) - 1
-        self.start_date_time = historical_prices["date_time"].iloc[0]
-        self.end_date_time = historical_prices["date_time"].iloc[-1]		
+        self.start_date_time = historical_prices[date_time_col].iloc[0]
+        self.end_date_time = historical_prices[date_time_col].iloc[-1]		
         self.capital = initial_capital
-        start_price = historical_prices["Open"][0]
+        start_price = historical_prices[price_col][0]
         self.lowest_expected_price = start_price * (1 - max_expected_depreciation_rate)
         # other attributes
         self.price_points = None
@@ -27,10 +30,12 @@ class Holdings:
         self.historical_index = 0
         for column_name in ["capital_available", "num_positions", "step_profit", "step_transactions"]:
             self.historical_data[column_name] = np.nan
-        #self.historical_data = pd.DataFrame(index=np.arange(len(historical_data)), columns=["date_time", "capital_available", "num_positions", "step_profit", "step_transactions"])
+
+        print("Preparing simulation for step size of {:.1%}...\n".format(growth_step_size))
 
         # create list of price buy/sell points
-        print("starting to create price points, from {} until {}".format(round(self.lowest_expected_price,2), start_price))
+        print("Creating price points, from {} until {}...\n".format(\
+            round(self.lowest_expected_price,2), start_price))
         price_points = []
         new_point = round(self.lowest_expected_price,2) # lowest point
         growth_step_ratio = 1 + growth_step_size
@@ -38,9 +43,9 @@ class Holdings:
             price_points.append(new_point) # other points
             new_point = round(new_point * growth_step_ratio, 2)
         price_points.append(round(start_price,2) + .01) # starting price_point (we're selling once we get to a new high)
+        print("Price points created are: \n{}\n".format(price_points))
         # convert to np.array
         price_points = np.array(price_points)
-        print("price points created")
         # store in Class object
         self.price_points = price_points
 
@@ -147,9 +152,11 @@ class Holdings:
     ###############################################
 
     def run_sim(self, log_full_history=False):
+        print("Running simulation steps...\n")
         sim_not_finished = self.sim_step(log_full_history)
         while sim_not_finished:
             sim_not_finished = self.sim_step(log_full_history)
+        print("\n Simulation has ended\n")
 
     def first_sim_step(self):
         # initialize first position
@@ -163,11 +170,11 @@ class Holdings:
 
     def sim_step(self, log_full_history=False):
         if self.historical_index % 10000 == 0:
-            print("Step #{}".format(self.historical_index))
+            print("Reached simulation step #{}".format(self.historical_index))
         # debugging
         #debugging_index = self.historical_index
         
-        new_price = self.historical_data.iloc[self.historical_index, 0]
+        new_price = self.historical_data.iloc[self.historical_index, 1]
 
         if self.historical_index == self.last_historical_index:
             self.last_sim_step(new_price)

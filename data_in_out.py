@@ -2,37 +2,46 @@ import pandas as pd
 import os
 import numpy as np
 
+# created for my particular historical data files
+def prep_my_data(stock_symbol):
+    my_data_file_path = os.path.join("stock_data", stock_symbol + "_raw.txt")
+    print("reading in {}...".format(my_data_file_path))
+    hist_data = pd.read_csv(my_data_file_path, usecols=["Date","Time","Open"], parse_dates=[["Date", "Time"]])
+    hist_data.columns = ["Date_Time", "Price"]
+
+    new_file_name = stock_symbol + ".txt"
+    hist_data.to_csv("stock_data/" + new_file_name, index=False)
+    print("successfully converted and saved to {}.".format(new_file_name))
+
+    return hist_data
+
+
 def read_hist_data(stock_symbol, start_date_time, end_date_time):
-    file_name = stock_symbol + "_" \
+    target_file_name = stock_symbol + "_" \
                 + pd.Timestamp(start_date_time).strftime("%Y-%m-%d-%H%M") + "_" \
                 + pd.Timestamp(end_date_time).strftime("%Y-%m-%d-%H%M") + ".csv"
-    file_path = os.path.join("stock_data", file_name)
-    if os.path.isfile(file_path):
-        hist_data = pd.read_csv(file_path)
-        print("successfully loaded " + file_path + "...")
+    target_file_path = os.path.join("stock_data", target_file_name)
+    if os.path.isfile(target_file_path):
+        hist_data = pd.read_csv(target_file_path)
     else:
-        hist_data = pd.read_csv("stock_data/" + stock_symbol + ".txt")
-        print("extracting relevant fields...")
-        hist_data = hist_data[["Date", "Time", "Open"]]
-        print("converting time...")
-        hist_data["Time"] = hist_data["Time"].astype(str).apply(lambda x: x[:-2] + ":" +  x[-2:])
-        print("combining data and time...")
-        hist_data["date_time"] = hist_data["Date"] + " " + hist_data["Time"]
-        print("dropping date and time...")
-        hist_data.drop(["Date", "Time"], axis=1, inplace=True)
-        print("converting to date type") 
-        hist_data["date_time"] = hist_data["date_time"].astype('datetime64[ns]')
+        read_file_path = os.path.join("stock_data", stock_symbol + ".txt")
+        print("reading in {}...".format(read_file_path))
+        hist_data = pd.read_csv(read_file_path, parse_dates=[0])
+        date_field_name = hist_data.columns[0]
         print("filtering out earlier ones...")
-        hist_data = hist_data[hist_data["date_time"] >= pd.Timestamp(start_date_time)]
+        hist_data = hist_data[hist_data[date_field_name] >= pd.Timestamp(start_date_time)]
         print("filtering out later ones...")
-        hist_data = hist_data[hist_data["date_time"] <= pd.Timestamp(end_date_time)]
+        hist_data = hist_data[hist_data[date_field_name] <= pd.Timestamp(end_date_time)]
 
         # reset index
         hist_data.index = np.arange(len(hist_data))
 
         # save for future so don't need to do each time
-        hist_data.to_csv(file_path, index=False)
-        print("successfully created and saved " + file_path + "...")
+        hist_data.to_csv(target_file_path, index=False)
+        print("\nsuccessfully created and saved " + target_file_path + "...\n")
+
+    print("\nsuccessfully loaded historical data for {} from {} until {}\nfrom file: '{}'\n".format( \
+            stock_symbol, start_date_time, end_date_time, target_file_path))
 
     return hist_data
 
@@ -42,5 +51,6 @@ def save_results(results_files, stock_symbol, results_file_names):
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
     for idx, file_name in enumerate(results_file_names):
-        print("Saving {} for {}".format(file_name, stock_symbol))
-        results_files[idx].to_csv(os.path.join(dir_name, file_name + '.csv'), float_format='%.3f')
+        file_path = os.path.join(dir_name, file_name + ".csv")
+        print("Saving {} for {} in: '{}'\n".format(file_name, stock_symbol, file_path))
+        results_files[idx].to_csv(file_path, float_format='%.3f')

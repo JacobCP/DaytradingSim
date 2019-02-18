@@ -12,7 +12,7 @@ MAX_EXPECTED_DEPRECIATION_RATE = .60
 GROWTH_STEP_SIZES = [.02, .04]
 
 # get the high and low prices
-historical_prices = read_hist_data(STOCK_SYMBOL, START_DATE_TIME, END_DATE_TIME) # (ToDo - create read_hist_data functions)
+historical_prices = read_hist_data(STOCK_SYMBOL, START_DATE_TIME, END_DATE_TIME)
 
 # prepare dataset to compare different trials
 compare_results_columns = ["profit_made", "total_transactions", "max_positions", "min_capital_available"]
