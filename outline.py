@@ -9,7 +9,7 @@ START_DATE_TIME = "2007-10-31 2:58 pm"
 END_DATE_TIME = "2010-12-7 9:30 am"
 CAPITAL_AMOUNT = 1000000
 MAX_EXPECTED_DEPRECIATION_RATE = .60
-GROWTH_STEP_SIZES = [.02, .04]
+GROWTH_STEP_SIZES = np.linspace(.002, .04, 20)
 
 # get the high and low prices
 historical_prices = read_hist_data(STOCK_SYMBOL, START_DATE_TIME, END_DATE_TIME)
@@ -33,9 +33,10 @@ for growth_size_step in GROWTH_STEP_SIZES:
 	compare_results.loc[growth_size_step] = sim_results_info
 
 	# save full history for each growth_step_size
-	save_results([full_historical], STOCK_SYMBOL, ["full_historical_" + str(growth_size_step)])
+	save_results([full_historical], STOCK_SYMBOL, ["full_historical_" + str(round(growth_size_step,3))])
 
 # save datasets with other info, and comparing results for different growth_step_sizes 
+sim_start_info = sim_start_info.drop(["appreciation_step_size", "num_price_points"])
 save_results([sim_start_info, compare_results], STOCK_SYMBOL, ["sim_parameters", "compare_results"])
 	
 
