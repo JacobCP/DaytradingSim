@@ -16,10 +16,9 @@ def prep_my_data(stock_symbol):
     return hist_data
 
 
-def read_hist_data(stock_symbol, start_date_time, end_date_time):
+def read_hist_data(stock_symbol, start_date_time):
     target_file_name = stock_symbol + "_" \
-                + pd.Timestamp(start_date_time).strftime("%Y-%m-%d-%H%M") + "_" \
-                + pd.Timestamp(end_date_time).strftime("%Y-%m-%d-%H%M") + ".csv"
+                + pd.Timestamp(start_date_time).strftime("%Y-%m-%d-%H%M") + ".csv"
     target_file_path = os.path.join("stock_data", target_file_name)
     if os.path.isfile(target_file_path):
         hist_data = pd.read_csv(target_file_path)
@@ -30,8 +29,6 @@ def read_hist_data(stock_symbol, start_date_time, end_date_time):
         date_field_name = hist_data.columns[0]
         print("filtering out earlier ones...")
         hist_data = hist_data[hist_data[date_field_name] >= pd.Timestamp(start_date_time)]
-        print("filtering out later ones...")
-        hist_data = hist_data[hist_data[date_field_name] <= pd.Timestamp(end_date_time)]
 
         # reset index
         hist_data.index = np.arange(len(hist_data))
@@ -40,8 +37,8 @@ def read_hist_data(stock_symbol, start_date_time, end_date_time):
         hist_data.to_csv(target_file_path, index=False)
         print("\nsuccessfully created and saved " + target_file_path + "...\n")
 
-    print("\nsuccessfully loaded historical data for {} from {} until {}\nfrom file: '{}'\n".format( \
-            stock_symbol, start_date_time, end_date_time, target_file_path))
+    print("\nsuccessfully loaded historical data for {} starting from {} \nfrom file: '{}'\n".format( \
+            stock_symbol, start_date_time, target_file_path))
 
     return hist_data
 

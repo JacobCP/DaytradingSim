@@ -6,13 +6,12 @@ import pandas as pd
 # choose parameters
 STOCK_SYMBOL = "QQQ" 
 START_DATE_TIME = "2007-10-31 2:58 pm"
-END_DATE_TIME = "2010-12-7 9:30 am"
 CAPITAL_AMOUNT = 1000000
 MAX_EXPECTED_DEPRECIATION_RATE = .60
-GROWTH_STEP_SIZES = np.linspace(.002, .04, 20)
+GROWTH_STEP_SIZES = [.04]
 
 # get the high and low prices
-historical_prices = read_hist_data(STOCK_SYMBOL, START_DATE_TIME, END_DATE_TIME)
+historical_prices = read_hist_data(STOCK_SYMBOL, START_DATE_TIME)
 
 # prepare dataset to compare different trials
 compare_results_columns = ["profit_made", "total_transactions", "max_positions", "min_capital_available"]

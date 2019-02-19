@@ -183,17 +183,18 @@ class Holdings:
         # debugging
         #debugging_index = self.historical_index
         
+        new_date = self.historical_data.iloc[self.historical_index, 0]
         new_price = self.historical_data.iloc[self.historical_index, 1]
-
-        if self.historical_index == self.last_historical_index:
-            self.last_sim_step(new_price)
-            return(False)		
 
         # some notes
         # for rollover, it needs to reach higher
         # for buying at lower, it just needs to reach exact
         step_position = self.price_points.searchsorted(new_price)
 
+        if step_position == len(self.price_points): # means it's above last index
+            print("\nEnding sim at date: {} and price: {}".format(new_date, new_price))
+            return(False)
+           
         profit_made = 0.0
         transactions_made = 0
 
