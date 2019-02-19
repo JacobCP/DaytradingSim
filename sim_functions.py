@@ -3,10 +3,23 @@ import pandas as pd
 
 class Holdings:
 
-    def __init__(self, historical_prices, initial_capital, growth_step_size, max_expected_depreciation_rate):
+    def __init__(self, historical_prices, sim_start_date, initial_capital, growth_step_size, max_expected_depreciation_rate, prev_high=None):
         # get col_names
         date_time_col = historical_prices.columns[0]
         price_col = historical_prices.columns[1]
+
+        # before filtering, get the previous high
+        date_values = historical_prices[date_time_col]
+        start_date_index = np.where(date_values == sim_start_date)[0][0]
+        if prev_high is not None:
+            self.high = prev_high
+        else:
+            self.high = np.max(date_values[:start_date_index+1])
+        print("The previous high was {}".format(self.high))
+
+        # drop earlier dates
+        print("filtering out earlier ones...")
+        historical_prices = historical_prices.iloc[start_date_index:,:].copy()
 
         # store arguments
         self.historical_data = historical_prices
@@ -18,7 +31,7 @@ class Holdings:
         self.start_date_time = historical_prices[date_time_col].iloc[0]
         self.end_date_time = historical_prices[date_time_col].iloc[-1]		
         self.capital = initial_capital
-        start_price = historical_prices[price_col][0]
+        start_price = historical_prices[price_col].iloc[0]
         self.lowest_expected_price = start_price * (1 - max_expected_depreciation_rate)
         # other attributes
         self.price_points = None
@@ -45,12 +58,6 @@ class Holdings:
             new_point = round(new_point * lower_step_ratio, 2)
         price_points.append(round(price_points[-1] * growth_step_ratio,2)) # highest price point
         
-        # new_point = round(self.lowest_expected_price,2) # lowest point
-        # growth_step_ratio = 1 + growth_step_size
-        # while new_point < start_price:
-        #     price_points.append(new_point) # other points
-        #     new_point = round(new_point * growth_step_ratio, 2)
-        # price_points.append(new_point) # starting price_point (we're selling once we get to a new high)
         print("Price points created are: \n{}\n".format(price_points))
         # convert to np.array
         price_points = np.array(price_points)
@@ -168,13 +175,13 @@ class Holdings:
 
     def first_sim_step(self):
         # initialize first position
-        initial_index = len(self.price_points) - 1
+        initial_index = len(self.price_points) - 2
         initial_price = self.historical_data.iloc[self.historical_index, 1]
         self.buy_position(initial_index, initial_price)
         self.current_index = initial_index
         # initialize historical information
         self.update_historical(0.0, 1)
-		# move historical_index
+        # move historical_index
         self.historical_index += 1
 
     def sim_step(self, log_full_history=False):

@@ -11,7 +11,7 @@ MAX_EXPECTED_DEPRECIATION_RATE = .60
 GROWTH_STEP_SIZES = [.04]
 
 # get the high and low prices
-historical_prices = read_hist_data(STOCK_SYMBOL, START_DATE_TIME)
+historical_prices = read_hist_data(STOCK_SYMBOL)
 
 # prepare dataset to compare different trials
 compare_results_columns = ["profit_made", "total_transactions", "max_positions", "min_capital_available"]
@@ -19,7 +19,7 @@ compare_results = pd.DataFrame(columns = compare_results_columns)
 
 for growth_size_step in GROWTH_STEP_SIZES:
 	# Create simulation object
-	sim_holdings = Holdings(historical_prices, CAPITAL_AMOUNT, growth_size_step, MAX_EXPECTED_DEPRECIATION_RATE)
+	sim_holdings = Holdings(historical_prices, START_DATE_TIME, CAPITAL_AMOUNT, growth_size_step, MAX_EXPECTED_DEPRECIATION_RATE)
 
 	# run the simulation
 	sim_holdings.run_sim()

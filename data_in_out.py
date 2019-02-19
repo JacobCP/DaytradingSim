@@ -16,29 +16,12 @@ def prep_my_data(stock_symbol):
     return hist_data
 
 
-def read_hist_data(stock_symbol, start_date_time):
-    target_file_name = stock_symbol + "_" \
-                + pd.Timestamp(start_date_time).strftime("%Y-%m-%d-%H%M") + ".csv"
-    target_file_path = os.path.join("stock_data", target_file_name)
-    if os.path.isfile(target_file_path):
-        hist_data = pd.read_csv(target_file_path)
-    else:
-        read_file_path = os.path.join("stock_data", stock_symbol + ".txt")
-        print("reading in {}...".format(read_file_path))
-        hist_data = pd.read_csv(read_file_path, parse_dates=[0])
-        date_field_name = hist_data.columns[0]
-        print("filtering out earlier ones...")
-        hist_data = hist_data[hist_data[date_field_name] >= pd.Timestamp(start_date_time)]
+def read_hist_data(stock_symbol):
+    read_file_path = os.path.join("stock_data", stock_symbol + ".txt")
+    print("reading in {}...".format(read_file_path))
+    hist_data = pd.read_csv(read_file_path, parse_dates=[0])
 
-        # reset index
-        hist_data.index = np.arange(len(hist_data))
-
-        # save for future so don't need to do each time
-        hist_data.to_csv(target_file_path, index=False)
-        print("\nsuccessfully created and saved " + target_file_path + "...\n")
-
-    print("\nsuccessfully loaded historical data for {} starting from {} \nfrom file: '{}'\n".format( \
-            stock_symbol, start_date_time, target_file_path))
+    print("\nsuccessfully loaded '{}'\n".format(read_file_path))
 
     return hist_data
 
