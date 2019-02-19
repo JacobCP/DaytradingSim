@@ -42,7 +42,7 @@ class Holdings:
         while new_point < start_price:
             price_points.append(new_point) # other points
             new_point = round(new_point * growth_step_ratio, 2)
-        price_points.append(round(start_price,2) + .01) # starting price_point (we're selling once we get to a new high)
+        price_points.append(new_point) # starting price_point (we're selling once we get to a new high)
         print("Price points created are: \n{}\n".format(price_points))
         # convert to np.array
         price_points = np.array(price_points)
@@ -161,7 +161,8 @@ class Holdings:
     def first_sim_step(self):
         # initialize first position
         initial_index = len(self.price_points) - 1
-        self.buy_position(initial_index, self.price_points[-1])
+        initial_price = self.historical_data.iloc[self.historical_index, 1]
+        self.buy_position(initial_index, initial_price)
         self.current_index = initial_index
         # initialize historical information
         self.update_historical(0.0, 1)
