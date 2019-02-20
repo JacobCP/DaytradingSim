@@ -14,13 +14,13 @@ class Holdings:
  
         # before filtering, get the previous high
         def get_previous_high(historical_prices, before_date_index):
-            return np.max(date_values[:before_date_index])
+            return np.max(historical_prices[price_col][:before_date_index])
 
         if all_time_high is not None:
-            self.high = all_time_high
+            self.all_time_high = all_time_high
         else:
-            self.high = get_previous_high(historical_prices, start_date_index)
-        print("The previous high was {}".format(self.high))
+            self.all_time_high = get_previous_high(historical_prices, start_date_index)
+        print("The previous high was {}".format(self.all_time_high))
         # once we have that, we no longer need the earlier dates
         print("filtering out earlier ones...")
         historical_prices = historical_prices.iloc[start_date_index:,:].copy()
@@ -46,8 +46,7 @@ class Holdings:
         # start the simulation steps
         print("Preparing simulation for step size of {:.1%}...\n".format(growth_step_size))
 
-        start_price = historical_prices[price_col].iloc[0]
-        self.price_points = self.create_price_points(start_price, self.max_expected_depreciation_rate, self.growth_step_size)
+        self.price_points = self.create_price_points(self.all_time_high, self.max_expected_depreciation_rate, self.growth_step_size)
 
         # initialize first step
         self.first_sim_step()
@@ -151,14 +150,14 @@ class Holdings:
     ###############################################
 
     # create list of price buy/sell points
-    def create_price_points(self, start_price, max_expected_depreciation_rate, growth_step_size):
-        lowest_expected_price = start_price * (1 - max_expected_depreciation_rate)
+    def create_price_points(self, all_time_high, max_expected_depreciation_rate, growth_step_size):
+        lowest_expected_price = all_time_high * (1 - max_expected_depreciation_rate)
         print("Creating price points, from {} until {}...\n".format(\
-            round(lowest_expected_price,2), start_price + .01))
+            round(lowest_expected_price,2), round(all_time_high + .01,2)))
 
         price_points = []
         
-        new_point = round(start_price, 2) + .01 # second to highest price point (current price)
+        new_point = round(all_time_high, 2) + .01 # second to highest price point (current price)
         growth_step_ratio = 1 + growth_step_size
         lower_step_ratio = 1 / growth_step_ratio
         while new_point > lowest_expected_price:
@@ -187,10 +186,11 @@ class Holdings:
 
     def first_sim_step(self):
         # initialize first position
-        initial_index = len(self.price_points) - 2
-        initial_price = self.historical_data.iloc[self.historical_index, 1]
-        self.buy_position(initial_index, initial_price)
-        self.current_position_index = initial_index
+        initial_price = self.historical_data.iloc[0, 1]
+        initial_position_index = self.price_points.searchsorted(initial_price)
+        self.buy_position(initial_position_index, initial_price)
+        self.current_position_index = initial_position_index
+        
         # initialize historical information
         self.update_historical(0.0, 1)
         # move historical_index
