@@ -30,14 +30,14 @@ class Holdings:
         self.initial_capital = initial_capital
         self.growth_step_size = growth_step_size		
         self.max_expected_depreciation_rate = max_expected_depreciation_rate
-        
-        # other attributes
-        self.price_points = None
+
         # point in time attributes
         self.capital = initial_capital
         self.positions = {}
         self.current_position_index = None
         self.num_positions = 0
+        self.price_points = None
+        self.highest_buying_price = 0
         # historical logging attributes
         self.historical_index = 0
         for column_name in ["capital_available", "num_positions", "step_profit", "step_transactions"]:
@@ -73,6 +73,12 @@ class Holdings:
 
     def get_min_capital_available(self):
         return np.min(self.historical_data["capital_available"])
+
+    def get_current_step_date(self):
+        return self.historical_data.iloc[self.historical_index, 0]
+        
+    def get_current_step_price(self):
+        return self.historical_data.iloc[self.historical_index, 1]
 
     def get_sim_info(self):
 		# create series of sim information:
@@ -172,10 +178,11 @@ class Holdings:
         
         return price_points
 
-    def shift_price_points(self, step_price):
+    def shift_price_points(self):
+        step_price = self.get_current_step_price()
         price_points = self.price_points.copy()
         growth_step_ratio = 1 + self.growth_step_size
-        
+
         shift_counter = 0
         
         # create new price points
@@ -224,13 +231,14 @@ class Holdings:
         # debugging
         #debugging_index = self.historical_index
         
-        step_date = self.historical_data.iloc[self.historical_index, 0]
-        step_price = self.historical_data.iloc[self.historical_index, 1]
+        step_date = self.get_current_step_date()
+        step_price = self.get_current_step_price()
 
         step_price_point_index = self.price_points.searchsorted(step_price)
 
         if step_price_point_index == len(self.price_points): # means it's above last index
             print("\nEnding sim at date: {} and price: {}".format(step_date, step_price))
+            self.last_sim_step()
             return(False)
            
         profit_made = 0.0
@@ -255,7 +263,7 @@ class Holdings:
 
             # if we've passed the max price_point, we need to do a shift 
             if step_price_point_index == len(self.price_points): # it's past the highest index
-                self.price_points = self.shift_price_points(step_price)
+                self.price_points = self.shift_price_points()
                 step_price_point_index -= 1 # after shifting, it's now the highest index
 
             new_position_price_point_index = step_price_point_index - 1
@@ -298,12 +306,12 @@ class Holdings:
 
         return(True)
 
-    def last_sim_step(self, close_price):
+    def last_sim_step(self):
         profit_made = 0.0
         transactions_made = 0
         
         for position_index in list(self.positions.keys()):
-            profit_made += self.sell_position(position_index, close_price)
+            profit_made += self.sell_position(position_index, self.get_current_step_price())
             transactions_made += 1
 
         self.update_historical(profit_made, transactions_made)
