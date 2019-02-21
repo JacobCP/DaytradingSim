@@ -27,6 +27,7 @@ class Holdings:
 
         # store arguments
         self.historical_data = historical_prices
+        self.min_months_duration = min_months_duration
         self.min_end_date = pd.Timestamp(sim_start_date) + np.timedelta64(min_months_duration, "M")
         self.initial_capital = initial_capital
         self.growth_step_size = growth_step_size		
@@ -51,6 +52,7 @@ class Holdings:
         self.price_points = self.create_price_points(self.all_time_high, self.max_expected_depreciation_rate, self.growth_step_size)
 
         # initialize first step
+        self.report_on_start()
         self.first_sim_step()
 
     ############################################
@@ -84,6 +86,15 @@ class Holdings:
 
     def is_past_min_end_date(self):
         return self.get_current_step_date() >= self.min_end_date
+
+    def report_on_start(self):
+        print("Starting simulation at {} for a minimum duration of {} years and {} months.".format(self.get_current_step_date(), int(self.min_months_duration / 12), self.min_months_duration % 12))
+        print("We have a virtual ${:,} in capital.".format(self.initial_capital))
+        print("The stock price is currently ${}, with the all-time high until this date calculated at ${}".format(self.get_current_step_price(), self.all_time_high))
+        print("We're accounting for a possible low of {:.0%} from the all-time high".format(self.max_expected_depreciation_rate))
+        print("Each position stakes will be sold after appreciating {:.1%}".format(self.growth_step_size))
+        print("\nstarting...\n")
+
 
     def get_sim_info(self):
 		# create series of sim information:

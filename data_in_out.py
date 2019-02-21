@@ -18,7 +18,7 @@ def prep_my_data(stock_symbol):
 
 def read_hist_data(stock_symbol):
     read_file_path = os.path.join("stock_data", stock_symbol + ".txt")
-    print("reading in {}...".format(read_file_path))
+    print("\nreading in {}...".format(read_file_path))
     hist_data = pd.read_csv(read_file_path, parse_dates=[0])
 
     print("\nsuccessfully loaded '{}'\n".format(read_file_path))
