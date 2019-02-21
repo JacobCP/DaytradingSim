@@ -38,6 +38,7 @@ class Holdings:
         self.num_positions = 0
         self.price_points = None
         self.highest_buying_price = 0
+
         # historical logging attributes
         self.historical_index = 0
         for column_name in ["capital_available", "num_positions", "step_profit", "step_transactions"]:
@@ -121,6 +122,10 @@ class Holdings:
         self.positions[price_point_index] = (current_price, shares_to_buy) # price_point_index: [(price_bought, num_shares_bought)*]
         self.capital -= current_price * shares_to_buy
         self.num_positions += 1
+
+        if current_price > self.highest_buying_price:
+            self.highest_buying_price = current_price
+
         # debugging
         #print("Bought {}".format(price_point_index))
 
@@ -236,7 +241,8 @@ class Holdings:
 
         step_price_point_index = self.price_points.searchsorted(step_price)
 
-        if step_price_point_index == len(self.price_points): # means it's above last index
+        # if step_price_point_index == len(self.price_points): # means it's above last index
+        if step_price > self.highest_buying_price:
             print("\nEnding sim at date: {} and price: {}".format(step_date, step_price))
             self.last_sim_step()
             return(False)
