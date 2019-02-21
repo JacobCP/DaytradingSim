@@ -3,7 +3,7 @@ import pandas as pd
 
 class Holdings:
 
-    def __init__(self, historical_prices, sim_start_date, initial_capital, growth_step_size, max_expected_depreciation_rate, all_time_high=None):
+    def __init__(self, historical_prices, sim_start_date, initial_capital, growth_step_size, max_expected_depreciation_rate, min_months_duration=12, all_time_high=None):
         # get col_names to use for readable code
         date_time_col = historical_prices.columns[0]
         price_col = historical_prices.columns[1]
@@ -14,7 +14,7 @@ class Holdings:
  
         # before filtering, get the previous high
         def get_previous_high(historical_prices, before_date_index):
-            return np.max(historical_prices[price_col][:before_date_index])
+            return np.max(historical_prices[price_col][:before_date_index+1])
 
         if all_time_high is not None:
             self.all_time_high = all_time_high
@@ -27,6 +27,7 @@ class Holdings:
 
         # store arguments
         self.historical_data = historical_prices
+        self.min_end_date = pd.Timestamp(sim_start_date) + np.timedelta64(min_months_duration, "M")
         self.initial_capital = initial_capital
         self.growth_step_size = growth_step_size		
         self.max_expected_depreciation_rate = max_expected_depreciation_rate
@@ -81,6 +82,9 @@ class Holdings:
     def get_current_step_price(self):
         return self.historical_data.iloc[self.historical_index, 1]
 
+    def is_past_min_end_date(self):
+        return self.get_current_step_date() >= self.min_end_date
+
     def get_sim_info(self):
 		# create series of sim information:
         sim_info = pd.Series()
@@ -127,7 +131,7 @@ class Holdings:
             self.highest_buying_price = current_price
 
         # debugging
-        #print("Bought {}".format(price_point_index))
+        print("Bought {}".format(price_point_index))
 
     def sell_position(self, price_point_index, current_price):
         bought_price, shares_bought = self.positions.pop(price_point_index)
@@ -135,7 +139,7 @@ class Holdings:
         self.num_positions -= 1
         self.capital += current_price * shares_bought
         # debugging
-        #print("Sold {}".format(price_point_index))
+        print("Sold {}".format(price_point_index))
         #print("Sold {}, bought at {}, for profit of {:.2f}".format(price_point_index, bought_price, profit))
 
         return profit
@@ -146,7 +150,7 @@ class Holdings:
 
         self.positions[to_price_point_index] = self.positions.pop(from_price_point_index)
         # debugging
-        #print("Rolled over {} to {}".format(from_price_point_index, to_price_point_index))
+        print("Rolled over {} to {}".format(from_price_point_index, to_price_point_index))
     
     ###############################################
     # historical information
@@ -185,7 +189,7 @@ class Holdings:
 
     def shift_price_points(self):
         step_price = self.get_current_step_price()
-        price_points = self.price_points.copy()
+        price_points = list(self.price_points)
         growth_step_ratio = 1 + self.growth_step_size
 
         shift_counter = 0
@@ -200,10 +204,10 @@ class Holdings:
         del price_points[:shift_counter]
 
         # shift all positions
-        for position in list(self.positions):
+        for position in sorted(list(self.positions)):
             self.positions[position - shift_counter] = self.positions.pop(position)
 
-        return price_points
+        return np.array(price_points)
 
     ###############################################
     # actual simulation steps
@@ -234,7 +238,7 @@ class Holdings:
             print("Reached simulation step #{}".format(self.historical_index))
         
         # debugging
-        #debugging_index = self.historical_index
+        debugging_index = self.historical_index
         
         step_date = self.get_current_step_date()
         step_price = self.get_current_step_price()
@@ -242,7 +246,7 @@ class Holdings:
         step_price_point_index = self.price_points.searchsorted(step_price)
 
         # if step_price_point_index == len(self.price_points): # means it's above last index
-        if step_price > self.highest_buying_price:
+        if step_price > self.highest_buying_price and self.is_past_min_end_date():
             print("\nEnding sim at date: {} and price: {}".format(step_date, step_price))
             self.last_sim_step()
             return(False)
@@ -258,8 +262,8 @@ class Holdings:
             new_position_price_point_index = step_price_point_index
 
 			# debugging			
-            #print("{}: {} -> {}".format(debugging_index, self.current_position_index, new_position_price_point_index))
-            #print("positions: {}".format(sorted(self.positions)))
+            print("{}: {} -> {}".format(debugging_index, self.current_position_index, new_position_price_point_index))
+            print("positions: {}".format(sorted(self.positions)))
 
             self.buy_position(new_position_price_point_index, step_price)
             self.current_position_index = new_position_price_point_index
@@ -269,14 +273,20 @@ class Holdings:
 
             # if we've passed the max price_point, we need to do a shift 
             if step_price_point_index == len(self.price_points): # it's past the highest index
+                # debugging
+                print("Shifting point, at date: {} and price {}, the step_pp_index was {}".format(step_date, step_price, step_price_point_index))
+                print("Old price_points were: {}".format(self.price_points))
+                print("Old positions were: {}".format(self.positions))
                 self.price_points = self.shift_price_points()
+                print("New price_points were: {}".format(self.price_points))
+                print("New positions are: {}".format(self.positions))
                 step_price_point_index -= 1 # after shifting, it's now the highest index
 
             new_position_price_point_index = step_price_point_index - 1
 
 			# debugging			
-            #print("{}: {} -> {}".format(debuggingindex, self.current_position_index, new_position_price_point_index))
-            #print("positions: {}".format(sorted(self.positions)))
+            print("{}: {} -> {}".format(debugging_index, self.current_position_index, new_position_price_point_index))
+            print("positions: {}".format(sorted(self.positions)))
 
             # get all lower positions
             lower_positions = sorted([key for key in self.positions if key < new_position_price_point_index])

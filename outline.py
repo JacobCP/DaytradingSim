@@ -19,7 +19,7 @@ compare_results = pd.DataFrame(columns = compare_results_columns)
 
 for growth_size_step in GROWTH_STEP_SIZES:
 	# Create simulation object
-	sim_holdings = Holdings(historical_prices, START_DATE_TIME, CAPITAL_AMOUNT, growth_size_step, MAX_EXPECTED_DEPRECIATION_RATE)
+	sim_holdings = Holdings(historical_prices, START_DATE_TIME, CAPITAL_AMOUNT, growth_size_step, MAX_EXPECTED_DEPRECIATION_RATE, min_months_duration=60)
 
 	# run the simulation
 	sim_holdings.run_sim()
