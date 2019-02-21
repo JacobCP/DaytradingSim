@@ -172,6 +172,19 @@ class Holdings:
         
         return price_points
 
+    def shift_price_points(self, new_price):
+        price_points = self.price_points.copy()
+        growth_step_ratio = 1 + self.growth_step_size
+        
+        shift_counter = 0
+        while new_price > price_points[-1]:
+            new_point = price_points[-1] * (growth_step_ratio)
+            price_points.append(new_point)
+            shift_counter += 1
+
+        del price_points[:shift_counter]
+
+        return price_points
 
     ###############################################
     # actual simulation steps
