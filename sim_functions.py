@@ -196,7 +196,7 @@ class Holdings:
         
         # create new price points
         while step_price > price_points[-1]:
-            new_point = price_points[-1] * (growth_step_ratio)
+            new_point = round(price_points[-1] * (growth_step_ratio), 2)
             price_points.append(new_point)
             shift_counter += 1
 
@@ -331,4 +331,8 @@ class Holdings:
             transactions_made += 1
 
         self.update_historical(profit_made, transactions_made)
+        self.historical_index += 1
+
+        self.historical_data = self.historical_data.iloc[:self.historical_index]
+        
 
