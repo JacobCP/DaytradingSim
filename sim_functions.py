@@ -172,17 +172,24 @@ class Holdings:
         
         return price_points
 
-    def shift_price_points(self, new_price):
+    def shift_price_points(self, step_price):
         price_points = self.price_points.copy()
         growth_step_ratio = 1 + self.growth_step_size
         
         shift_counter = 0
-        while new_price > price_points[-1]:
+        
+        # create new price points
+        while step_price > price_points[-1]:
             new_point = price_points[-1] * (growth_step_ratio)
             price_points.append(new_point)
             shift_counter += 1
 
+        # delete corresponding lower price_points
         del price_points[:shift_counter]
+
+        # shift all positions
+        for position in list(self.positions):
+            self.positions[position - shift_counter] = self.positions.pop(position)
 
         return price_points
 
@@ -210,66 +217,71 @@ class Holdings:
         self.historical_index += 1
 
     def sim_step(self, log_full_history=False):
+        # logging
         if self.historical_index % 10000 == 0:
             print("Reached simulation step #{}".format(self.historical_index))
+        
         # debugging
         #debugging_index = self.historical_index
         
-        new_date = self.historical_data.iloc[self.historical_index, 0]
-        new_price = self.historical_data.iloc[self.historical_index, 1]
+        step_date = self.historical_data.iloc[self.historical_index, 0]
+        step_price = self.historical_data.iloc[self.historical_index, 1]
 
-        # some notes
-        # for rollover, it needs to reach higher
-        # for buying at lower, it just needs to reach exact
-        step_position = self.price_points.searchsorted(new_price)
+        step_price_point_index = self.price_points.searchsorted(step_price)
 
-        if step_position == len(self.price_points): # means it's above last index
-            print("\nEnding sim at date: {} and price: {}".format(new_date, new_price))
+        if step_price_point_index == len(self.price_points): # means it's above last index
+            print("\nEnding sim at date: {} and price: {}".format(step_date, step_price))
             return(False)
            
         profit_made = 0.0
         transactions_made = 0
 
         # do selling / buying / rollover
-        if step_position in [self.current_position_index, self.current_position_index + 1]: # nothing happened, just move on
+        if step_price_point_index in [self.current_position_index, self.current_position_index + 1]: # nothing happened, just move on
             pass
         
-        elif step_position < self.current_position_index:
-            new_position = step_position
+        elif step_price_point_index < self.current_position_index: # lower, need to buy new
+            new_position_price_point_index = step_price_point_index
 
 			# debugging			
-            #print("{}: {} -> {}".format(debugging_index, self.current_position_index, new_position))
+            #print("{}: {} -> {}".format(debugging_index, self.current_position_index, new_position_price_point_index))
             #print("positions: {}".format(sorted(self.positions)))
 
-            self.buy_position(new_position, new_price)
-            self.current_position_index = new_position
+            self.buy_position(new_position_price_point_index, step_price)
+            self.current_position_index = new_position_price_point_index
             transactions_made += 1
 
-        elif step_position > self.current_position_index + 1: 
-            new_position = step_position - 1
+        elif step_price_point_index > self.current_position_index + 1: # higher, need to sell/rollover
+
+            # if we've passed the max price_point, we need to do a shift 
+            if step_price_point_index == len(self.price_points): # it's past the highest index
+                self.price_points = self.shift_price_points(step_price)
+                step_price_point_index -= 1 # after shifting, it's now the highest index
+
+            new_position_price_point_index = step_price_point_index - 1
 
 			# debugging			
-            #print("{}: {} -> {}".format(debugging_index, self.current_position_index, new_position))
+            #print("{}: {} -> {}".format(debuggingindex, self.current_position_index, new_position_price_point_index))
             #print("positions: {}".format(sorted(self.positions)))
 
             # get all lower positions
-            lower_positions = sorted([key for key in self.positions if key < new_position])
+            lower_positions = sorted([key for key in self.positions if key < new_position_price_point_index])
             #print("lower_positions: {}".format(lower_positions))
 
             # sell all lower ones
             for position in lower_positions[:-1]:
-                profit_made += self.sell_position(position, new_price)
+                profit_made += self.sell_position(position, step_price)
                 transactions_made += 1
 
             # either rollover or sell highest one
-            if new_position in self.positions:
-                profit_made += self.sell_position(lower_positions[-1], new_price)
+            if new_position_price_point_index in self.positions:
+                profit_made += self.sell_position(lower_positions[-1], step_price)
                 transactions_made += 1
             else:
-                self.rollover_position(lower_positions[-1], new_position)
+                self.rollover_position(lower_positions[-1], new_position_price_point_index)
 
             # update current index
-            self.current_position_index = new_position
+            self.current_position_index = new_position_price_point_index
             #print("{} (end of sales): profit made was: {:.2f}".format(debugging_index, profit_made))
 
 
