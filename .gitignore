@@ -1,6 +1,7 @@
 *.txt
 *.pyc
 *checkpoint*ipynb
+*debugging.ipynb
 *.csv
 *.pickle
 *copy.py*
