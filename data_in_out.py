@@ -30,5 +30,5 @@ def save_results(results_files, stock_symbol, results_file_names):
         os.makedirs(dir_name)
     for idx, file_name in enumerate(results_file_names):
         file_path = os.path.join(dir_name, file_name + ".csv")
-        print("Saving {} for {} in: '{}'\n".format(file_name, stock_symbol, file_path))
+        print("Saving {} for {} in: '{}'".format(file_name, stock_symbol, file_path))
         results_files[idx].to_csv(file_path, float_format='%.3f')

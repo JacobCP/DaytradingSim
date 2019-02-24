@@ -25,6 +25,7 @@ class Holdings:
 
         # store arguments
         self.historical_data = historical_prices
+        self.sim_start_date = pd.Timestamp(sim_start_date)
         self.min_months_duration = min_months_duration
         self.min_end_date = pd.Timestamp(sim_start_date) + np.timedelta64(min_months_duration, "M")
         self.initial_capital = initial_capital
@@ -62,7 +63,7 @@ class Holdings:
         return len(self.price_points)
 
     def get_current_total_profit(self):
-        return np.sum(self.historical_data["step_profit"])
+        return round(np.sum(self.historical_data["step_profit"]),2)
 
     def get_current_total_transactions(self):
         return np.sum(self.historical_data["step_transactions"])
@@ -74,7 +75,7 @@ class Holdings:
         return np.min(self.historical_data["capital_available"])
 
     def get_current_step_date(self):
-        return self.historical_data.iloc[self.historical_index, 0]
+        return pd.Timestamp(self.historical_data.iloc[self.historical_index, 0]) 
         
     def get_current_step_price(self):
         return self.historical_data.iloc[self.historical_index, 1]
@@ -82,12 +83,9 @@ class Holdings:
     def is_past_min_end_date(self):
         return self.get_current_step_date() >= self.min_end_date
 
-    def report_on_start(self):
-        print("Starting simulation at {} for a minimum duration of {} years and {} months.".format(self.get_current_step_date(), int(self.min_months_duration / 12), self.min_months_duration % 12))
-        print("We have a virtual ${:,} in capital.".format(self.initial_capital))
-        print("The stock price is currently ${}, with the all-time high before this date calculated at ${}".format(self.get_current_step_price(), self.all_time_high))
-        print("We're accounting for a possible depreciation of {:.0%} from the all-time high".format(self.max_expected_depreciation_rate))
-        print("Each position will be sold after appreciating {:.1%}\n".format(self.growth_step_size))
+    def get_sim_duration_months(self):
+        sim_duration = (self.get_current_step_date() - self.sim_start_date).days
+        return round(sim_duration / 30.5, 0)
 
     def get_sim_info(self):
 		# create series of sim information:
@@ -106,11 +104,30 @@ class Holdings:
         results_info = pd.Series()
 
         results_info["profit_made"] = self.get_current_total_profit()
+        results_info["percent_return"] = results_info["profit_made"] / self.initial_capital
         results_info["total_transactions"] = self.get_current_total_transactions()
+        results_info["total_sales"] = self.get_current_total_transactions() / 2
         results_info["max_positions"] = self.get_max_positions_held()
-        results_info["min_capital_available"] = self.get_min_capital_available()	
+        results_info["min_capital_available"] = self.get_min_capital_available()
+        results_info["months_duration"] = self.get_sim_duration_months()
+        results_info["sim_end_price"] = self.get_current_step_price()
 
         return results_info
+
+    def report_on_start(self):
+        sim_info = self.get_sim_info()
+        print("Starting simulation at {} for a minimum duration of {} years and {} months.".format(self.get_current_step_date(), int(self.min_months_duration / 12), self.min_months_duration % 12))
+        print("We have a virtual ${:,} in capital.".format(sim_info["capital"]))
+        print("The stock price is currently ${}, with the all-time high before this date calculated at ${}".format(self.get_current_step_price(), self.all_time_high))
+        print("We're accounting for a possible depreciation of {:.0%} from the all-time high".format(sim_info["depreciation_accounted_for"]))
+        print("Each position will be sold after appreciating {:.1%}\n".format(sim_info["appreciation_step_size"]))
+
+    def report_on_end(self):
+        results = self.get_results_info()
+        print("\n\nEnding sim at date: {} and price: ${}\n".format(self.get_current_step_date(), results["sim_end_price"]))
+        print("Simulation lasted for {:.0f} years and {:.0f} months".format(results["months_duration"] // 12, results["months_duration"] % 12))
+        print("Bought and sold a total of {:.0f} positions".format(results["total_sales"]))
+        print("Made a total profit of ${:,}, generating a return of {:.1%} on invested capital\n".format(results["profit_made"], results["percent_return"]))
 
     def get_full_info(self):
         return self.get_sim_info().append(self.get_results_info())
@@ -228,8 +245,7 @@ class Holdings:
         
         # for when the loop ends
         self.last_sim_step()
-        
-        print("\n Simulation has ended\n")
+        self.report_on_end()
 
     def first_sim_step(self):
         # initialize first position
@@ -326,7 +342,6 @@ class Holdings:
         self.historical_index += 1
 
     def last_sim_step(self):
-        print("\n\nEnding sim at date: {} and price: {}".format(self.get_current_step_date(), self.get_current_step_price()))
         profit_made = 0.0
         transactions_made = 0
         
@@ -335,8 +350,8 @@ class Holdings:
             transactions_made += 1
 
         self.update_historical(profit_made, transactions_made)
-        self.historical_index += 1
+        # self.historical_index += 1 # keep the index on the last step
 
-        self.historical_data = self.historical_data.iloc[:self.historical_index]
+        self.historical_data = self.historical_data.iloc[:self.historical_index+1]
         
 
