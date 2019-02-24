@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import sys
 
 class Holdings:
 
@@ -20,9 +21,6 @@ class Holdings:
             self.all_time_high = all_time_high
         else:
             self.all_time_high = get_previous_high(historical_prices, start_date_index)
-        print("The previous high was {}".format(self.all_time_high))
-        # once we have that, we no longer need the earlier dates
-        print("filtering out earlier ones...")
         historical_prices = historical_prices.iloc[start_date_index:,:].copy()
 
         # store arguments
@@ -46,14 +44,11 @@ class Holdings:
         for column_name in ["capital_available", "num_positions", "step_profit", "step_transactions"]:
             self.historical_data[column_name] = np.nan
 
-        # start the simulation steps
-        print("Preparing simulation for step size of {:.1%}...\n".format(growth_step_size))
-
         self.price_points = self.create_price_points(self.all_time_high, self.max_expected_depreciation_rate, self.growth_step_size)
 
-        # initialize first step
+        
+        # report on basic simulation info
         self.report_on_start()
-        self.first_sim_step()
 
     ############################################
     # retrieving attribute info
@@ -90,11 +85,9 @@ class Holdings:
     def report_on_start(self):
         print("Starting simulation at {} for a minimum duration of {} years and {} months.".format(self.get_current_step_date(), int(self.min_months_duration / 12), self.min_months_duration % 12))
         print("We have a virtual ${:,} in capital.".format(self.initial_capital))
-        print("The stock price is currently ${}, with the all-time high until this date calculated at ${}".format(self.get_current_step_price(), self.all_time_high))
-        print("We're accounting for a possible low of {:.0%} from the all-time high".format(self.max_expected_depreciation_rate))
-        print("Each position stakes will be sold after appreciating {:.1%}".format(self.growth_step_size))
-        print("\nstarting...\n")
-
+        print("The stock price is currently ${}, with the all-time high before this date calculated at ${}".format(self.get_current_step_price(), self.all_time_high))
+        print("We're accounting for a possible depreciation of {:.0%} from the all-time high".format(self.max_expected_depreciation_rate))
+        print("Each position will be sold after appreciating {:.1%}\n".format(self.growth_step_size))
 
     def get_sim_info(self):
 		# create series of sim information:
@@ -178,8 +171,6 @@ class Holdings:
     # create list of price buy/sell points
     def create_price_points(self, all_time_high, max_expected_depreciation_rate, growth_step_size):
         lowest_expected_price = all_time_high * (1 - max_expected_depreciation_rate)
-        print("Creating price points, from {} until {}...\n".format(\
-            round(lowest_expected_price,2), round(all_time_high + .01,2)))
 
         price_points = []
         
@@ -194,7 +185,6 @@ class Holdings:
         # convert to np.array
         price_points = np.array(price_points)
 
-        print("Price points created are: \n{}\n".format(price_points))
         
         return price_points
 
@@ -225,10 +215,20 @@ class Holdings:
     ###############################################
 
     def run_sim(self, log_full_history=False):
-        print("Running simulation steps...\n")
-        sim_not_finished = self.sim_step(log_full_history)
-        while sim_not_finished:
-            sim_not_finished = self.sim_step(log_full_history)
+        print("Running simulation...\n\nReached step:")
+
+        # initialize first step
+        self.first_sim_step()
+
+        while True:
+            # if step_price_point_index == len(self.price_points): # means it's above last index
+            if self.get_current_step_price() > self.highest_buying_price and self.is_past_min_end_date():
+                break
+            self.sim_step(log_full_history)
+        
+        # for when the loop ends
+        self.last_sim_step()
+        
         print("\n Simulation has ended\n")
 
     def first_sim_step(self):
@@ -246,21 +246,15 @@ class Holdings:
     def sim_step(self, log_full_history=False):
         # logging
         if self.historical_index % 10000 == 0:
-            print("Reached simulation step #{}".format(self.historical_index))
+            print("#{:,} | ".format(self.historical_index), end="")
+            sys.stdout.flush()
         
         # debugging
         # debugging_index = self.historical_index
         
-        step_date = self.get_current_step_date()
         step_price = self.get_current_step_price()
 
         step_price_point_index = self.price_points.searchsorted(step_price)
-
-        # if step_price_point_index == len(self.price_points): # means it's above last index
-        if step_price > self.highest_buying_price and self.is_past_min_end_date():
-            print("\nEnding sim at date: {} and price: {}".format(step_date, step_price))
-            self.last_sim_step()
-            return(False)
            
         profit_made = 0.0
         transactions_made = 0
@@ -331,9 +325,8 @@ class Holdings:
 		# move historical_index
         self.historical_index += 1
 
-        return(True)
-
     def last_sim_step(self):
+        print("\n\nEnding sim at date: {} and price: {}".format(self.get_current_step_date(), self.get_current_step_price()))
         profit_made = 0.0
         transactions_made = 0
         
