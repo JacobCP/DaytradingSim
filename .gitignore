@@ -1,5 +1,6 @@
 *.txt
 *.pyc
+*.pdf
 *checkpoint*ipynb
 *debugging.ipynb
 *.csv
