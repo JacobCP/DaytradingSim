@@ -1,7 +1,7 @@
 # Daytrading Simulation with Python
 
 The simulation implements a low-risk daytrading strategy on historical stock data.  
-For a high-level understanding of the strategy, see "this" article.
+For a high-level understanding of the strategy, see [this](https://www.linkedin.com/pulse/search-safe-day-trading-algorithm-jacob-ehrlichster) article.
 
 ### **To run the simulation yourself, you'll need historical trading data in the following format:**  
 
